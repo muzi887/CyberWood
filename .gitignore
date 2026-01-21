@@ -1,3 +1,6 @@
+# =========================
+# Frontend (Vue / Node)
+# =========================
 # Logs
 logs
 *.log
@@ -7,18 +10,58 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependency directories
 node_modules
+.npm
+.yarn
+
+# Build output
 dist
 dist-ssr
+
+# Local env files
+.env.local
+.env.*.local
 *.local
 
-# Editor directories and files
+# =========================
+# Backend (.NET / C#)
+# =========================
+# Build results (二进制文件和中间文件，绝对不要提交)
+[Bb]in/
+[Oo]bj/
+
+# User-specific files (你的本地配置，不需要同步给别人)
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / VS Code hidden config
+.vs/
 .vscode/*
 !.vscode/extensions.json
-.idea
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+
+# =========================
+# Database (SQLite)
+# =========================
+# 数据库文件 (这点最重要！不要把数据库提交上去)
+*.db
+*.db-shm
+*.db-wal
+
+# =========================
+# OS / Generic
+# =========================
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# =========================
+# 注意事项修正
+# =========================
+# 你原来的文件里忽略了 *.sln，通常建议保留它（不要忽略）
+# 因为 .sln 是解决方案入口文件，别人拉取代码需要双击它打开项目
+# 如果你确定不想提交解决方案文件，取消下面这行的注释：
+# *.sln
