@@ -1,4 +1,4 @@
-// cyber-woodfish/src/composables/woodfishConfig.ts
+// Client/src/composables/woodfishConfig.ts
 
 import { STORAGE_KEYS } from './storage';
 

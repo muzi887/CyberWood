@@ -1,4 +1,4 @@
-// cyber-woodfish/src/composables/storage.ts
+// Client/src/composables/storage.ts
 
 // 定义常量(Single Source of Truth)
 // 使用 as const 确保类型安全

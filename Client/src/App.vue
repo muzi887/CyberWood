@@ -1,5 +1,6 @@
+<!-- Client/src/App.vue -->
 <template>
-  <div class="app-shell" :class="{ 'gold-mode': counts.merit >= 100 }">
+  <div class="app-shell" :style="{ backgroundColor: bgColor}">
     <div class="stats">
       <div
         v-for="item in WOODFISH_STATS"
@@ -109,6 +110,7 @@ const {
   autoInterval,
   manualVolume,
   autoVolume,
+  bgColor,
   toggleAuto,
   setAutoInterval,
   resetCounts,

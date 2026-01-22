@@ -22,8 +22,9 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at top, #1d1d2a, #0b0b12 65%);
-  transition: background 300ms ease;
+  /* background: radial-gradient(circle at top,transparent 0%, #0b0b12 90%); */
+  /* ✨ 核心 CSS：添加背景色过渡动画 */
+  transition: background-color 0.6s ease-in-out;
 }
 
 .app-shell.gold-mode {

@@ -1,5 +1,5 @@
 // Client/src/composables/useWoodfish.ts
-import { ref, reactive, onBeforeUnmount, onMounted} from 'vue';
+import { ref, reactive, computed, onBeforeUnmount, onMounted} from 'vue';
 import { WOODFISH_STATS } from './woodfishConfig';
 import { STORAGE_KEYS, useStorage } from './storage';
 import { api } from './api';
@@ -127,7 +127,6 @@ export function useWoodfish() {
         counts[picked.key] = newValue;
 
         // 当前所有的最新数值发送给后端保存
-        api.updateStats(counts);
         // 防抖（Debounce)
         // 如果之前有待发送的任务，先取消
         if(saveTimer) clearTimeout(saveTimer);
@@ -155,6 +154,50 @@ export function useWoodfish() {
         }, 1000);
     };
 
+    // --- 背景色计算逻辑
+    // 纯函数逻辑：完全依赖当前 counts 的瞬时状态
+    const bgColor = computed(() => {
+        // 解构时给默认值 0，防止 undefined 报错 (虽然 reactive 初始值通常没问题)
+        const merit = counts['merit'] || 0;
+        const luck = counts['luck'] || 0;
+        const wisdom = counts['wisdom'] || 0;
+
+        // 定义颜色生成的辅助函数
+        // hue：色相（0-360）
+        // level：当前是第几个100（1，2，3...)
+        const getDynamicColor = (hue: number, level: number) => {
+            // 初始亮度 90%（极浅），每升一级亮度降低 5%，最低降到 25% （深色）
+            const lightness = Math.max(25, 90 - (level * 5));
+
+            // 饱和度固定80%，保证颜色鲜艳
+            return `hsl(${hue}, 80%, ${lightness}%)`;
+        };
+
+        // 1. 优先级最高：功德 (Merit) -> 黄色系 (Hue 45)
+        // 判断条件：大于0 且 是100的倍数
+        if (merit >= 100) {
+            // 向下取整
+            const level = Math.floor(merit / 100);
+            return getDynamicColor(45, level);
+        }
+
+        // 2. 优先级第二：好运 (Luck) -> 蓝色系 (Hue 210)
+        if (luck >= 100) {
+            // 向下取整
+            const level = Math.floor(luck / 100);
+            return getDynamicColor(210, level);
+        }
+
+        // 3. 优先级第三：智慧 (Wisdom) -> 紫色系 (Hue 270)
+        if (wisdom >= 100) {
+            // 向下取整
+            const level = Math.floor(wisdom / 100);
+            return getDynamicColor(270, level);
+        }
+
+        // 默认背景：保持暗色
+        return '#1a1a1a';
+    });
     // --- 自动控制逻辑 ---
     const startAuto = () => {
         if (autoTimer) return;
@@ -252,6 +295,7 @@ export function useWoodfish() {
         autoInterval,
         manualVolume,
         autoVolume,
+        bgColor,
         toggleAuto,
         setAutoInterval,
         handleManualKnock,
