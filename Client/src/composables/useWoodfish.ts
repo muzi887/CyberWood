@@ -105,21 +105,29 @@ export function useWoodfish() {
     let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
     // --- 核心敲击逻辑 （Data-Driven) --- 
-    const knock = (options = { volume: 1 }) => {
+    const knock = (options : { volume?: number; type?: string } = {}) => {
+        const volume = options.volume ?? 1;
+        
         // 动画触发
         isActive.value = true;
         setTimeout(() => { isActive.value = false; }, 120);
 
         const id = nextId++;
         const offset = Math.round(Math.random() * 140 - 70);
-        
-        // 从配置表中随机选取
-        const picked = WOODFISH_STATS[Math.floor(Math.random() * WOODFISH_STATS.length)];
-        
+
+        let picked;
+        if(options.type){
+            // 如果传入了类型
+            picked = WOODFISH_STATS.find(item => item.key === options.type);
+        }else{
+            // 从配置表中随机选取
+            picked = WOODFISH_STATS[Math.floor(Math.random() * WOODFISH_STATS.length)];
+        }
+
         if(!picked) return;
 
         // 播放声音（传入配置的音色）
-        playSound(picked.timbre, options.volume);
+        playSound(picked.timbre, volume);
 
         // 乐观更新（Optimistic UI）
         // 不管服务器是否相应，屏幕上先 +1，让用户感觉不到延迟
@@ -230,8 +238,10 @@ export function useWoodfish() {
     };
 
     // --- 手动交互与重叠 --- 
-    const handleManualKnock = () => {
-        knock({ volume: manualVolume.value });
+    // 支持接收参数
+    const handleManualKnock = (specificType?: string) => {
+        // 传入 type
+        knock({ volume: manualVolume.value, type: specificType });
         saveVolume();
     };
 

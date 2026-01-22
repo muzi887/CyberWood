@@ -40,7 +40,7 @@ body {
   display: flex;
   gap: 12px;
   z-index: 10;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .stat {
@@ -52,6 +52,20 @@ body {
   text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer; /* 鼠标放上去变小手 */
+  user-select: none; /* 防止双击选中文字 */
+  transition: transform 0.1s, background 0.2s;
+}
+
+/* 鼠标悬停效果 */
+.stat:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.2); /* 稍微变亮 */
+}
+
+/* 鼠标按下效果 */
+.stat:active {
+  transform: scale(0.95); /* 稍微缩小 */
 }
 
 .stat-merit {

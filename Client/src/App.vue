@@ -7,6 +7,7 @@
         :key="item.key"
         class="stat"
         :class="item.typeClass"
+        @click="handleManualKnock(item.key)"
       >
         {{ item.label }}：{{ counts[item.key] }}
       </div>
@@ -56,7 +57,7 @@
       <button class="reset-btn" @click="resetCounts">清零/自定义重置</button>
     </div>
     <div class="stage">
-      <button class="woodfish" :class="{ 'is-active': isActive }" @click="handleManualKnock">
+      <button class="woodfish" :class="{ 'is-active': isActive }" @click="handleManualKnock()">
         <svg
           width="240"
           height="240"
