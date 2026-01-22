@@ -42,11 +42,30 @@ namespace CyberWoodfish.API.Controllers
     [HttpPost]
     public async Task<ActionResult<UserStats>> UpdateStats(UserStats newStats)
     {
-      var dbStats = await _context.UserStats.FirstOrDefaultAsync();
+      // 尝试找 ID = 1 的数据
+      var dbStats = await _context.UserStats.FindAsync(1); // FirstOrDefault()
       if(dbStats == null)
       {
-        newStats.Id = 1;
-        _context.UserStats.Add(newStats);
+        // 防止两个请求同时挤进新增导致报错
+        try{
+          newStats.Id = 1;
+          _context.UserStats.Add(newStats);
+          await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+          // 报错后再查一次
+          dbStats = await _context.UserStats.FindAsync(1);
+          if(dbStats != null )
+          {
+            // 查找成功，更新数据
+            dbStats.Merit = newStats.Merit;
+            dbStats.Luck = newStats.Luck;
+            dbStats.Wisdom = newStats.Wisdom;
+            dbStats.LastUpdated = DateTime.Now;
+            await _context.SaveChangesAsync();
+          }
+        }
       }
       else
       {
@@ -54,10 +73,8 @@ namespace CyberWoodfish.API.Controllers
         dbStats.Luck = newStats.Luck;
         dbStats.Wisdom = newStats.Wisdom;
         dbStats.LastUpdated = DateTime.Now;
+        await _context.SaveChangesAsync();
       }
-
-      // 写入数据库
-      await _context.SaveChangesAsync();
 
       return Ok(newStats);
     }

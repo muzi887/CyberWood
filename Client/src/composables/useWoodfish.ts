@@ -1,7 +1,8 @@
-// cyber-woodfish/src/composables/useWoodfish.ts
-import { ref, reactive, onBeforeUnmount} from 'vue';
+// Client/src/composables/useWoodfish.ts
+import { ref, reactive, onBeforeUnmount, onMounted} from 'vue';
 import { WOODFISH_STATS } from './woodfishConfig';
 import { STORAGE_KEYS, useStorage } from './storage';
+import { api } from './api';
 
 export function useWoodfish() {
     // 解构出数值专用的读写方法
@@ -11,11 +12,22 @@ export function useWoodfish() {
     // 使用 reactive 对象存储所有计数值，Key 对应配置表中的 key
     const counts = reactive<Record<string, number>>({});
     
-
-    // 遍历配置表，从 LocalStorage 读取初始值
-    WOODFISH_STATS.forEach((item) => {
-        counts[item.key] = getNumber(item.storageKey, 0);
+    // 组件加载时，从后端获取真实数据
+    onMounted(async() => {
+        const serverData = await api.getStats();
+        if(serverData){
+            // 把服务器的数据同步到前端界面
+            // 注意：服务器返回的时小写字段
+            counts['merit'] = serverData.merit;
+            counts['luck'] = serverData.luck;
+            counts['wisdom'] = serverData.wisdom;
+        }
     });
+
+    // // 遍历配置表，从 LocalStorage 读取初始值
+    // WOODFISH_STATS.forEach((item) => {
+    //     counts[item.key] = getNumber(item.storageKey, 0);
+    // });
 
     // UI 动画相关状态
     const merits = ref<any[]>([]); // 浮动文字队列
@@ -89,6 +101,9 @@ export function useWoodfish() {
         }
     };
     
+    // 计时器变量
+    let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
     // --- 核心敲击逻辑 （Data-Driven) --- 
     const knock = (options = { volume: 1 }) => {
         // 动画触发
@@ -106,17 +121,25 @@ export function useWoodfish() {
         // 播放声音（传入配置的音色）
         playSound(picked.timbre, options.volume);
 
-        // 4. 更新数值 (核心修改点)
-        // 解释：如果 counts[picked.key] 是 undefined，就用 0 代替，然后 +1
-        // 这样 TS 这里的逻辑就闭环了：(number | undefined -> number) + 1 = number
+        // 乐观更新（Optimistic UI）
+        // 不管服务器是否相应，屏幕上先 +1，让用户感觉不到延迟
         const newValue = (counts[picked.key] ?? 0) + 1;
-        
-        // 赋值回去
         counts[picked.key] = newValue;
 
-        // 5. 持久化存储 (直接用新算出来的值)
-        setNumber(picked.storageKey, newValue);
+        // 当前所有的最新数值发送给后端保存
+        api.updateStats(counts);
+        // 防抖（Debounce)
+        // 如果之前有待发送的任务，先取消
+        if(saveTimer) clearTimeout(saveTimer);
 
+        // 重新定一个 1s后的闹钟
+        saveTimer = setTimeout(() => {
+            console.log("用户停手了，正在保存数据到服务器...");
+            api.updateStats(counts);
+        }, 1000);
+
+        // // 持久化存储 (直接用新算出来的值)
+        // setNumber(picked.storageKey, newValue);
 
         // 处理水波纹
         const rippleId = nextRippleId++;
@@ -189,7 +212,7 @@ export function useWoodfish() {
     };
 
     // --- 重置逻辑 （Data-Driven）---
-    const resetCounts = () => {
+    const resetCounts = async () => {
         const input = window.prompt(
             "请输入要重置到的数字（留空或 0 为清零）",
             "0"
@@ -204,16 +227,19 @@ export function useWoodfish() {
         if (!window.confirm(`确认将所有数值重置为 ${nextValue} 吗？`)) {
             return;
         }
+
         // 遍历配置表重置所有状态
         WOODFISH_STATS.forEach(item => {
             counts[item.key] = nextValue;
             setNumber(item.storageKey, nextValue);
         })
+        // 同步给后端
+        await api.updateStats(counts);
    };
 
     // --- 生命周期清理 ---
     onBeforeUnmount(() => {
-    stopAuto();
+        stopAuto();
     });
 
     // 返回所有需要给组件使用的变量和方法
