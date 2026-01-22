@@ -117,6 +117,7 @@ export function useWoodfish() {
         // 5. 持久化存储 (直接用新算出来的值)
         setNumber(picked.storageKey, newValue);
 
+
         // 处理水波纹
         const rippleId = nextRippleId++;
         ripples.value.push(rippleId);
