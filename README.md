@@ -57,7 +57,7 @@
 
 ## 📅 待开发计划 (Roadmap)
 
-- [ ] **容器化部署**: 编写 `Dockerfile` 与 `docker-compose.yaml`，实现一键拉起前后端。
+- [x] **容器化部署**: 已完成！支持 Docker 一键拉起前后端与数据库。
 - [ ] **多用户系统**: 引入 JWT 鉴权，支持不同用户拥有独立的功德账户。
 - [ ] **排行榜**: 展示全服功德/好运/智慧排行榜。
 
@@ -66,14 +66,40 @@
 ## 🔧 快速开始 (Quick Start)
 
 ### 后端 (Server)
+
 ```bash
 cd Server/CyberWoodfish.API
 dotnet restore
 dotnet run
 # API 将运行在 http://localhost:5xxx
-前端 (Client)
-Bash
+```
+
+### 前端 (Client)
+
+```Bash
 cd Client
 npm install
 npm run dev
 # 访问 http://localhost:5173
+```
+
+### 🐳 Docker 一键部署 (推荐)
+
+如果你不想安装 .NET SDK 和 Node.js 环境，可以使用 Docker 直接运行。
+
+1. **前置条件**: 确保本地已安装并启动 [Docker Desktop](https://www.docker.com/products/docker-desktop/)。
+2. **准备数据库**: 
+   - 首次运行会自动在根目录创建 `woodfish_data` 文件夹。
+   - 如果需要保留原有数据，请将本地的 `woodfish.db` 复制到 `woodfish_data/` 目录中。
+3. **启动服务**:
+
+```bash
+# 在项目根目录执行
+docker-compose up --build
+```
+
+4. **访问应用**:
+
+Web 前端: http://localhost:5173
+
+API 文档: http://localhost:5076/swagger

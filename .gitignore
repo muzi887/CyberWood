@@ -59,9 +59,10 @@ dist-ssr
 Thumbs.db
 
 # =========================
-# 注意事项修正
+# Docker
 # =========================
-# 你原来的文件里忽略了 *.sln，通常建议保留它（不要忽略）
-# 因为 .sln 是解决方案入口文件，别人拉取代码需要双击它打开项目
-# 如果你确定不想提交解决方案文件，取消下面这行的注释：
-# *.sln
+# 忽略 Docker 挂载的数据目录 (防止把生产库提交上去)
+woodfish_data/
+
+# 如果你有 docker-compose.override.yaml (本地特有配置)，也应该忽略
+docker-compose.override.yaml

@@ -60,6 +60,25 @@ app.UseAuthorization();
 // 映射控制器（让 StatsController 生效）
 app.MapControllers();
 
+// docker容器启动时自动建表
+// 本地时用命令 dotnet ef database update 实现了建表
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<WoodfishContext>();
+        // 自动创建数据库和表结构(如果不存在)
+        context.Database.EnsureCreated();
+        Console.WriteLine("数据库检查完成，已确保表结构存在");
+    }
+    catch(Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex,"创建数据库时发生错误");
+    }
+}
+
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

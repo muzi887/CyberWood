@@ -1,0 +1,27 @@
+# docker-compose.yaml
+services:
+  # 后端服务
+  api:
+    build:
+      context: ./Server/CyberWoodfish.API
+      dockerfile: Dockerfile
+    container_name: woodfish-api
+    ports:
+      - "5076:8080" # 把容器的5076 映射到电脑的 5076
+    volumes:
+      # 关键：将容器内的数据库目录映射到宿主机，防止重启丢数据。
+      - ./woodfish_data:/app/Data
+    environment:
+      # 告诉后端：数据库文件地址
+      - ConnectionStrings__DefaultConnection=Data Source=/app/Data/woodfish.db
+
+  # 前端服务
+  web:
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+    container_name: woodfish-web
+    ports:
+      - "5173:80"   # 把容器的 80（Ngnix）映射到电脑的 5173
+    depends_on:
+      - api         # 确保后端先启动
