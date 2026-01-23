@@ -4,6 +4,12 @@ import { WOODFISH_STATS } from './woodfishConfig';
 import { STORAGE_KEYS, useStorage } from './storage';
 import { api } from './api';
 
+const BG_MODES = [
+    { key: 'balance', label: '☯️ 太极平衡' }, // 默认推荐
+    { key: 'samsara', label: '🎡 赛博轮回' },
+    { key: 'alchemy', label: '⚗️ 炼金术师' }
+];
+
 export function useWoodfish() {
     // 解构出数值专用的读写方法
     const { getNumber, setNumber } = useStorage();
@@ -162,49 +168,71 @@ export function useWoodfish() {
         }, 1000);
     };
 
-    // --- 背景色计算逻辑
-    // 纯函数逻辑：完全依赖当前 counts 的瞬时状态
+    // --- 背景模式状态管理 ---
+    // 从 localStorage 读取上次选的模式索引，默认为0（太极平衡）
+    const bgModeIndex = ref(getNumber('woodfish_bg_mode',0));
+
+    // 计算当前模式的完整对象（方便 UI 显示名字）
+    const currentMode = computed(() => BG_MODES[bgModeIndex.value]);
+    
+    // 切换模式的方法（循环切换）
+    const toggleBgMode = () => {
+        bgModeIndex.value = (bgModeIndex.value + 1) % BG_MODES.length;
+        setNumber('woodfish_bg_mode',bgModeIndex.value); // 持久化保存
+    };
+
+    // --- 核心：多模式背景色计算 ---
     const bgColor = computed(() => {
         // 解构时给默认值 0，防止 undefined 报错 (虽然 reactive 初始值通常没问题)
         const merit = counts['merit'] || 0;
         const luck = counts['luck'] || 0;
         const wisdom = counts['wisdom'] || 0;
+        const total = merit + luck + wisdom;
 
-        // 定义颜色生成的辅助函数
-        // hue：色相（0-360）
-        // level：当前是第几个100（1，2，3...)
-        const getDynamicColor = (hue: number, level: number) => {
-            // 初始亮度 90%（极浅），每升一级亮度降低 5%，最低降到 25% （深色）
-            const lightness = Math.max(25, 90 - (level * 5));
+        // 模式分发
+        switch(currentMode.value?.key){
+            // Mode 1: 赛博轮回（The Wheel of Karma）
+            // 规则：颜色随总数流转，无限循环
+            case 'samsara': {
+                if(total === 0) return '#1a1a1a';
+                const hue = (total * 2) % 360; // hue：色相（0-360）
+                const lightness = Math.min(60, 20 + Math.floor(total / 1000) * 10);
+                return `hsl(${hue}, 85%, ${lightness}%)`;
+            }
 
-            // 饱和度固定80%，保证颜色鲜艳
-            return `hsl(${hue}, 80%, ${lightness}%)`;
-        };
+            // Mode 2: 炼金术师（The Alchemist）
+            // 规则：RGB 物理融合，千人千色
+            case 'alchemy': {
+                if(total === 0) return '#1a1a1a';
+                // 向量加权混合：黄（255，200，0），蓝（0，150，255），紫（180，0，255）
+                const r = (merit * 255 + luck * 0 + wisdom * 180)/ total;
+                const g = (merit * 200 + luck * 150 + wisdom * 0 ) / total;
+                const b = (merit * 0 + luck * 255 + wisdom * 255) / total;
 
-        // 1. 优先级最高：功德 (Merit) -> 黄色系 (Hue 45)
-        // 判断条件：大于0 且 是100的倍数
-        if (merit >= 100) {
-            // 向下取整
-            const level = Math.floor(merit / 100);
-            return getDynamicColor(45, level);
+                // 亮度增强系数
+                const intensity = Math.min(1.5, 0.5 + total / 500);
+                return `rgb(${r * intensity}, ${g * intensity}, ${b * intensity})`;
+            }
+
+            // Mode 0: 太极平衡（Tai CHi Balance） - 默认
+            case 'balance':
+            default: {
+                if(total < 10)return '#1a1a1a';
+                const maxVal = Math.max(merit, luck, wisdom);
+                const minVal = Math.min(merit, luck, wisdom);
+                const diff = maxVal - minVal;
+
+                // ⚖️ 触发平衡态 (圣光金)
+                if(diff <= 5 && total >30 ){
+                    return `hsl(45, 100%, 90%)`;
+                }
+
+                // 🚫 偏科态 (深色警示)
+                if(merit === maxVal) return `hsl(45, 80%, 15%)`; // 深黄
+                if(luck === maxVal) return `hsl(210, 80%, 15%)`; // 深蓝
+                return `hsl(270, 80%, 15%)`;                     // 深紫
+            }
         }
-
-        // 2. 优先级第二：好运 (Luck) -> 蓝色系 (Hue 210)
-        if (luck >= 100) {
-            // 向下取整
-            const level = Math.floor(luck / 100);
-            return getDynamicColor(210, level);
-        }
-
-        // 3. 优先级第三：智慧 (Wisdom) -> 紫色系 (Hue 270)
-        if (wisdom >= 100) {
-            // 向下取整
-            const level = Math.floor(wisdom / 100);
-            return getDynamicColor(270, level);
-        }
-
-        // 默认背景：保持暗色
-        return '#1a1a1a';
     });
     // --- 自动控制逻辑 ---
     const startAuto = () => {
@@ -306,6 +334,8 @@ export function useWoodfish() {
         manualVolume,
         autoVolume,
         bgColor,
+        currentMode,
+        toggleBgMode,
         toggleAuto,
         setAutoInterval,
         handleManualKnock,

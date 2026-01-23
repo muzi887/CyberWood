@@ -16,6 +16,10 @@
       自动积攒：{{ isAuto ? "开" : "关" }}
     </button>
     <div class="control-panel">
+      <button class="mode-btn" @click="toggleBgMode">
+        <span class="mode-label">背景模式</span>
+        <span class="mode-value">{{ currentMode.label }}</span>
+      </button>
       <div class="speed-group">
         <span class="speed-label">自动档位</span>
         <button
@@ -112,6 +116,8 @@ const {
   manualVolume,
   autoVolume,
   bgColor,
+  currentMode,
+  toggleBgMode,
   toggleAuto,
   setAutoInterval,
   resetCounts,
